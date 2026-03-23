@@ -1,13 +1,26 @@
 /**
- * Daily Review Skill - 每日精选
+ * Daily Review Skill - 每日精选（肖恩风格）
  * 
  * 功能：从候选内容池中生成每日精选日报
+ * 栏目结构：参考肖恩技术周刊
  */
 
 import axios from 'axios';
 
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
 const FEISHU_WEBHOOK = process.env.FEISHU_WEBHOOK || '';
+
+/**
+ * 肖恩技术周刊的栏目结构
+ */
+const SECTIONS = {
+  '业界资讯': '行业动态、产品发布、公司动态',
+  '佳文共赏': '深度文章、观点分析、趋势洞察',
+  '技术博客': '技术实践、工程经验、架构设计',
+  '开源项目': '新开源工具、框架、库',
+  '资源推荐': '工具、平台、服务、网站',
+  '学习资料': '教程、课程、文档、指南'
+};
 
 /**
  * 获取待审阅文章
@@ -23,12 +36,12 @@ async function getPendingArticles() {
 }
 
 /**
- * 使用 LLM 分类整理文章
+ * 使用 LLM 按肖恩栏目分类整理文章
  */
 async function categorizeArticles(articles) {
   try {
     const articleList = articles.map(a => 
-      `- ${a.title} (来源：${a.source}, 分类：${a.category || '未分类'})`
+      `- ID:${a.id} [${a.category}] ${a.title} (来源：${a.source}, 标签：${a.tags?.join(',') || '无'})`
     ).join('\n');
     
     const response = await axios.post(
@@ -38,30 +51,34 @@ async function categorizeArticles(articles) {
         messages: [
           {
             role: 'system',
-            content: `你是一名专业的内容编辑，请将以下文章分类到这些栏目：
-1. 今日大事 - 行业重要新闻
-2. 变更与实践 - 技术更新、最佳实践
-3. 安全与风险 - 安全漏洞、风险提示
-4. 开源与工具 - 新开源项目、工具推荐
-5. 洞察与数据点 - 深度分析、数据报告
+            content: `你是肖恩技术周刊的编辑。请将以下文章分类到肖恩周刊的栏目中。
+
+栏目说明：
+- 业界资讯：行业动态、产品发布、公司动态
+- 佳文共赏：深度文章、观点分析、趋势洞察
+- 技术博客：技术实践、工程经验、架构设计
+- 开源项目：新开源工具、框架、库
+- 资源推荐：工具、平台、服务、网站
+- 学习资料：教程、课程、文档、指南
 
 返回 JSON 格式：
 {
-  "今日大事": [文章 ID 列表],
-  "变更与实践": [文章 ID 列表],
-  "安全与风险": [文章 ID 列表],
-  "开源与工具": [文章 ID 列表],
-  "洞察与数据点": [文章 ID 列表]
+  "业界资讯": [文章 ID 列表],
+  "佳文共赏": [文章 ID 列表],
+  "技术博客": [文章 ID 列表],
+  "开源项目": [文章 ID 列表],
+  "资源推荐": [文章 ID 列表],
+  "学习资料": [文章 ID 列表]
 }
 
-每个栏目选 2-5 篇最相关的文章，不要重复。`
+每个栏目选 2-5 篇最相关的文章，不要重复。优先选择质量评分高的文章。`
           },
           {
             role: 'user',
             content: articleList
           }
         ],
-        temperature: 0.7,
+        temperature: 0.5,
         response_format: { type: 'json_object' }
       },
       {
@@ -76,47 +93,65 @@ async function categorizeArticles(articles) {
     return JSON.parse(content);
   } catch (error) {
     console.error('LLM 分类失败:', error.message);
-    // 返回默认分类
-    return {
-      '今日大事': articles.slice(0, 5).map(a => a.id),
-      '开源与工具': articles.slice(5, 10).map(a => a.id)
-    };
+    // 返回按预分类的默认分类
+    const defaultCategories = {};
+    articles.forEach(a => {
+      const category = a.category || '技术博客';
+      if (!defaultCategories[category]) defaultCategories[category] = [];
+      if (defaultCategories[category].length < 5) {
+        defaultCategories[category].push(a.id);
+      }
+    });
+    return defaultCategories;
   }
 }
 
 /**
- * 生成日报 Markdown
+ * 生成肖恩风格的日报 Markdown
  */
 function generateDailyReview(articles, categories) {
   const today = new Date().toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    weekday: 'long'
   });
   
-  let markdown = `## 📰 Read Flow 每日精选 - ${today}\n\n`;
+  let markdown = `## 📰 肖恩技术周刊 - 每日精选\n\n`;
+  markdown += `**${today}**\n\n`;
+  markdown += `记录有价值的技术内容。\n\n---\n\n`;
   
   const articleMap = {};
   articles.forEach(a => articleMap[a.id] = a);
   
-  for (const [category, articleIds] of Object.entries(categories)) {
-    const selectedArticles = articleIds
-      .map(id => articleMap[id])
-      .filter(a => a);
+  for (const [section, articleIds] of Object.entries(SECTIONS)) {
+    const ids = categories[section] || [];
+    if (ids.length === 0) continue;
     
+    const selectedArticles = ids.map(id => articleMap[id]).filter(a => a);
     if (selectedArticles.length === 0) continue;
     
-    markdown += `### ${category}\n`;
+    markdown += `## ${section}\n\n`;
     
-    selectedArticles.forEach(article => {
-      markdown += `- [${article.title}](${article.url || '#'}) - ${article.source}\n`;
+    selectedArticles.forEach((article, index) => {
+      markdown += `### ${index + 1}. [${article.title}](${article.url || '#'})\n\n`;
+      
+      if (article.summary) {
+        markdown += `${article.summary}\n\n`;
+      }
+      
+      markdown += `> 来源：${article.source}`;
+      if (article.author) markdown += ` | 作者：${article.author}`;
+      if (article.tags && article.tags.length > 0) {
+        markdown += ` | 标签：${article.tags.join(', ')}`;
+      }
+      markdown += `\n\n`;
     });
     
-    markdown += '\n';
+    markdown += `---\n\n`;
   }
   
-  markdown += `---
-🤖 由 Read Flow 自动生成 | [查看详情](http://81.70.8.160/list)`;
+  markdown += `🤖 由 Read Flow 自动生成 | [查看详情](http://81.70.8.160:3000/list)\n`;
   
   return markdown;
 }
@@ -133,9 +168,7 @@ async function sendToFeishu(markdown) {
   try {
     await axios.post(FEISHU_WEBHOOK, {
       msg_type: 'text',
-      content: {
-        text: markdown
-      }
+      content: { text: markdown }
     });
     console.log('✅ 飞书推送成功');
   } catch (error) {
@@ -159,41 +192,41 @@ async function updateArticleStatus(articleIds) {
 }
 
 /**
- * 主函数：执行 Daily Review 流程
+ * 主函数：执行 Daily Review 流程（肖恩风格）
  */
 export async function runDailyReview() {
-  console.log('🚀 开始执行 Daily Review 流程...');
+  console.log('🚀 开始执行 Daily Review 流程（肖恩风格）...\n');
   
   try {
     // 1. 获取待审阅文章
     console.log('📥 获取待审阅文章...');
     const articles = await getPendingArticles();
-    console.log(`找到 ${articles.length} 篇待审阅文章`);
+    console.log(`   找到 ${articles.length} 篇待审阅文章\n`);
     
     if (articles.length === 0) {
-      console.log('ℹ️ 没有待审阅文章，跳过今日日报生成');
+      console.log('ℹ️ 没有待审阅文章，跳过今日日报生成\n');
       return { generated: false, reason: 'no_articles' };
     }
     
-    // 2. LLM 分类整理
-    console.log('🤖 LLM 分类整理...');
+    // 2. LLM 按肖恩栏目分类
+    console.log('🤖 LLM 按肖恩栏目分类整理...\n');
     const categories = await categorizeArticles(articles);
     
     // 3. 生成日报
-    console.log('📝 生成日报...');
+    console.log('📝 生成肖恩风格日报...\n');
     const dailyReview = generateDailyReview(articles, categories);
-    console.log('\n' + dailyReview);
+    console.log(dailyReview);
     
     // 4. 发送到飞书
-    console.log('📤 发送飞书推送...');
+    console.log('\n📤 发送飞书推送...');
     await sendToFeishu(dailyReview);
     
     // 5. 更新文章状态
-    console.log('🔄 更新文章状态...');
+    console.log('\n🔄 更新文章状态...');
     const allArticleIds = Object.values(categories).flat();
     await updateArticleStatus(allArticleIds);
     
-    console.log('\n✅ Daily Review 完成');
+    console.log('\n✅ Daily Review 完成\n');
     
     return {
       generated: true,
