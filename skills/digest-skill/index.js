@@ -5,9 +5,8 @@
  */
 
 import axios from 'axios';
-import { initDatabase, run, all, get } from '../src/db/database.js';
 
-const FRESHRSS_URL = process.env.FRESHRSS_URL || 'http://host.docker.internal:8081';
+const FRESHRSS_URL = process.env.FRESHRSS_URL || 'http://localhost:8081';
 const FRESHRSS_USER = process.env.FRESHRSS_USER || 'admin';
 const FRESHRSS_PASSWORD = process.env.FRESHRSS_PASSWORD || 'FreshRSS2026!';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3001';
@@ -74,8 +73,9 @@ async function getUnreadArticles(limit = 100) {
  */
 async function articleExists(url) {
   try {
-    const existing = await get('SELECT id FROM articles WHERE url = ?', [url]);
-    return !!existing;
+    const response = await axios.get(`${BACKEND_URL}/api/articles?limit=1000`);
+    const articles = response.data.data || [];
+    return articles.some(a => a.url === url);
   } catch (error) {
     console.error('检查文章是否存在失败:', error.message);
     return false;
@@ -93,7 +93,7 @@ async function generateSummary(title, content) {
     const response = await axios.post(
       'https://open.bigmodel.cn/api/paas/v4/chat/completions',
       {
-        model: 'glm-4-flash',
+        model: 'glm-4.7',
         messages: [
           {
             role: 'system',

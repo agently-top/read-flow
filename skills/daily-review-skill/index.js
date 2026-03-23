@@ -34,7 +34,7 @@ async function categorizeArticles(articles) {
     const response = await axios.post(
       'https://open.bigmodel.cn/api/paas/v4/chat/completions',
       {
-        model: 'glm-4-flash',
+        model: 'glm-4.7',
         messages: [
           {
             role: 'system',
@@ -66,7 +66,7 @@ async function categorizeArticles(articles) {
       },
       {
         headers: {
-          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY || ''}`,
+          'Authorization': `Bearer ${process.env.GLM_API_KEY || ''}`,
           'Content-Type': 'application/json'
         }
       }

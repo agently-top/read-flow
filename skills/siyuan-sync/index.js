@@ -6,7 +6,8 @@
 
 import axios from 'axios';
 
-const SIYUAN_API = process.env.SIYUAN_API_URL || 'http://host.docker.internal:6806';
+const SIYUAN_API = process.env.SIYUAN_API_URL || 'http://localhost:6806';
+const SIYUAN_TOKEN = process.env.SIYUAN_TOKEN || ''; // 思源 API token
 const NOTEBOOK_ID = process.env.SIYUAN_NOTEBOOK_ID || '20250805163218-dqifw69'; // "信息" 笔记本
 
 /**
@@ -103,7 +104,7 @@ ${article.content || '暂无正文内容'}
 ## 元数据
 
 - 分类：${article.category || '未分类'}
-- 标签：${article.tags?.join(', ') || '无'}
+- 标签：${Array.isArray(article.tags) ? article.tags.join(', ') : (article.tags || '无')}
 - 质量评分：${article.quality_score || 'N/A'}
 - 同步时间：${new Date().toLocaleString('zh-CN')}
 
