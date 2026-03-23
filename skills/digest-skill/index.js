@@ -91,9 +91,9 @@ async function generateSummary(title, content) {
     const truncatedContent = content.substring(0, 2000);
     
     const response = await axios.post(
-      'https://api.deepseek.com/v1/chat/completions',
+      'https://open.bigmodel.cn/api/paas/v4/chat/completions',
       {
-        model: 'deepseek-chat',
+        model: 'glm-4-flash',
         messages: [
           {
             role: 'system',
@@ -109,7 +109,7 @@ async function generateSummary(title, content) {
       },
       {
         headers: {
-          'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY || ''}`,
+          'Authorization': `Bearer ${process.env.GLM_API_KEY || ''}`,
           'Content-Type': 'application/json'
         }
       }

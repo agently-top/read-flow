@@ -32,9 +32,9 @@ async function categorizeArticles(articles) {
     ).join('\n');
     
     const response = await axios.post(
-      'https://api.deepseek.com/v1/chat/completions',
+      'https://open.bigmodel.cn/api/paas/v4/chat/completions',
       {
-        model: 'deepseek-chat',
+        model: 'glm-4-flash',
         messages: [
           {
             role: 'system',
