@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: readflow-backend
+    restart: unless-stopped
+    ports:
+      - "8082:3001"
+    volumes:
+      - ./backend:/app
+      - backend-data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=/app/data/readflow.db
+      - FRESHRSS_URL=http://host.docker.internal:8081
+      - FRESHRSS_USER=admin
+      - FRESHRSS_PASSWORD=FreshRSS2026!
+      - SIYUAN_API_URL=http://host.docker.internal:6806
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - readflow-network
+
+  frontend:
+    build: ./frontend
+    container_name: readflow-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8082
+    depends_on:
+      - backend
+    networks:
+      - readflow-network
+
+networks:
+  readflow-network:
+    driver: bridge
+
+volumes:
+  backend-data:
