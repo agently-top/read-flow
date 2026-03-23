@@ -24,26 +24,41 @@ export default function LatestArticles() {
   }, []);
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section className="py-12 bg-gray-50">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-8">最新内容</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">最新内容</h2>
+          <a href="/list" className="text-sm text-gray-600 hover:text-gray-900">
+            查看全部 →
+          </a>
+        </div>
         {loading ? (
-          <p className="text-center text-gray-500">加载中...</p>
+          <p className="text-gray-500 text-sm">加载中...</p>
         ) : articles.length > 0 ? (
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-4">
             {articles.map(article => (
-              <div key={article.id} className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-                <h3 className="text-xl font-semibold mb-2 line-clamp-2">{article.title}</h3>
-                <p className="text-gray-600 mb-4 line-clamp-2">{article.summary}</p>
-                <div className="flex justify-between text-sm text-gray-500">
+              <a
+                key={article.id}
+                href={`/article/${article.id}`}
+                className="bg-white p-5 rounded-lg border border-gray-200 hover:border-gray-400 hover:shadow-sm transition block"
+              >
+                <h3 className="text-base font-medium text-gray-900 mb-2 line-clamp-2">
+                  {article.title}
+                </h3>
+                <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                  {article.summary}
+                </p>
+                <div className="flex justify-between items-center text-xs text-gray-500">
                   <span>{article.source}</span>
-                  <span>{new Date(article.published_at).toLocaleDateString('zh-CN')}</span>
+                  <span>
+                    {new Date(article.published_at).toLocaleDateString('zh-CN')}
+                  </span>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-500">暂无内容，同步 FreshRSS 后查看</p>
+          <p className="text-gray-500 text-sm">暂无内容，同步 FreshRSS 后查看</p>
         )}
       </div>
     </section>

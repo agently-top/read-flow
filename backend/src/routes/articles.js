@@ -4,9 +4,9 @@ import { Article } from '../models/Article.js';
 const router = express.Router();
 
 // GET /api/articles - 获取文章列表
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const articles = Article.findAll({
+    const articles = await Article.findAll({
       status: req.query.status,
       source: req.query.source,
       category: req.query.category,
@@ -19,9 +19,9 @@ router.get('/', (req, res) => {
 });
 
 // GET /api/articles/:id - 获取单篇文章
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const article = Article.findById(req.params.id);
+    const article = await Article.findById(req.params.id);
     if (!article) {
       return res.status(404).json({ success: false, error: 'Article not found' });
     }
@@ -32,9 +32,9 @@ router.get('/:id', (req, res) => {
 });
 
 // POST /api/articles - 创建文章
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const article = Article.create(req.body);
+    const article = await Article.create(req.body);
     res.status(201).json({ success: true, data: article });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
@@ -42,9 +42,9 @@ router.post('/', (req, res) => {
 });
 
 // PATCH /api/articles/:id/status - 更新文章状态
-router.patch('/:id/status', (req, res) => {
+router.patch('/:id/status', async (req, res) => {
   try {
-    Article.updateStatus(req.params.id, req.body.status);
+    await Article.updateStatus(req.params.id, req.body.status);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

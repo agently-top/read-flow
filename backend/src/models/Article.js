@@ -1,7 +1,7 @@
-import db from '../db/database.js';
+import db, { all, get, run } from '../db/database.js';
 
 export class Article {
-  static findAll(filters = {}) {
+  static async findAll(filters = {}) {
     let sql = 'SELECT * FROM articles WHERE 1=1';
     const params = [];
     
@@ -25,23 +25,23 @@ export class Article {
       params.push(filters.limit);
     }
     
-    return db.prepare(sql).all(...params);
+    return await all(sql, params);
   }
 
-  static findById(id) {
-    return db.prepare('SELECT * FROM articles WHERE id = ?').get(id);
+  static async findById(id) {
+    return await get('SELECT * FROM articles WHERE id = ?', [id]);
   }
 
-  static findByUrl(url) {
-    return db.prepare('SELECT * FROM articles WHERE url = ?').get(url);
+  static async findByUrl(url) {
+    return await get('SELECT * FROM articles WHERE url = ?', [url]);
   }
 
-  static create(data) {
+  static async create(data) {
     const sql = `
       INSERT INTO articles (title, summary, content, url, source, author, published_at, category, tags, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-    const result = db.prepare(sql).run(
+    const result = await run(sql, [
       data.title,
       data.summary,
       data.content,
@@ -52,17 +52,18 @@ export class Article {
       data.category,
       JSON.stringify(data.tags || []),
       data.status || 'pending'
-    );
+    ]);
     return { id: result.lastInsertRowid, ...data };
   }
 
-  static updateStatus(id, status) {
-    return db.prepare(`
-      UPDATE articles SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-    `).run(status, id);
+  static async updateStatus(id, status) {
+    return await run(
+      'UPDATE articles SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [status, id]
+    );
   }
 
-  static count(filters = {}) {
+  static async count(filters = {}) {
     let sql = 'SELECT COUNT(*) as count FROM articles WHERE 1=1';
     const params = [];
     
@@ -71,6 +72,7 @@ export class Article {
       params.push(filters.status);
     }
     
-    return db.prepare(sql).get(...params).count;
+    const result = await get(sql, params);
+    return result ? result.count : 0;
   }
 }

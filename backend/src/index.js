@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import db from './db/database.js';
+import { initDatabase } from './db/database.js';
 import articleRoutes from './routes/articles.js';
 import syncRoutes from './routes/sync.js';
 
@@ -17,6 +17,14 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend running on port ${PORT}`);
-});
+// 异步初始化数据库
+initDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Backend running on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Failed to initialize database:', error);
+    process.exit(1);
+  });
