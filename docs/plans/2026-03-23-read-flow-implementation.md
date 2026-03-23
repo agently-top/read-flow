@@ -12,6 +12,10 @@
 
 **Tech Stack:** Node.js, Express, Next.js 14, Tailwind CSS, SQLite, Docker Compose, OpenClaw, SiYuan API
 
+**确认事项（Brainstorming 输出）：**
+- 访问方式：先用服务器 IP，后续绑定域名
+- 思源结构：使用现有 **"信息"** 笔记本 (ID: 20250805163218-dqifw69)
+
 ---
 
 ## 阶段 1：项目基础设施（Day 1）
