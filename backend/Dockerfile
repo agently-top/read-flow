@@ -19,9 +19,6 @@ RUN npm install --legacy-peer-deps
 # 复制源代码
 COPY . .
 
-# 复制技能脚本
-COPY ../skills ./skills
-
 # 暴露端口
 EXPOSE 3001
 

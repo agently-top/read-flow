@@ -3,6 +3,7 @@ import cors from 'cors';
 import { initDatabase } from './db/database.js';
 import articleRoutes from './routes/articles.js';
 import syncRoutes from './routes/sync.js';
+import adminRoutes from './routes/admin.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use('/api/articles', articleRoutes);
 app.use('/api/sync', syncRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

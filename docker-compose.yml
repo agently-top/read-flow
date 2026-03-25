@@ -11,13 +11,17 @@ services:
       - "3001:3001"
     volumes:
       - backend-data:/app/data
+      - ./skills:/app/skills
+      - ./backend/src:/app/src:ro
     environment:
       - NODE_ENV=production
       - PORT=3001
       - DATABASE_URL=/app/data/readflow.db
-      - FRESHRSS_URL=http://host.docker.internal:8081
+      - FRESHRSS_URL=http://freshrss:80
       - FRESHRSS_USER=admin
       - FRESHRSS_PASSWORD=FreshRSS2026!
+      - GLM_API_KEY=4ceace78eb0e4513972519c5bc2e0d64.lZnIQgJEkstQF6FF
+      - ADMIN_PASSWORD=SN2008@+
       - SIYUAN_API_URL=http://host.docker.internal:6806
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -32,6 +36,8 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src:ro
     environment:
       - NODE_ENV=production
       - PORT=3000

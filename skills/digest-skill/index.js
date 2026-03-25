@@ -126,7 +126,7 @@ async function generateSummary(title, content) {
     const response = await axios.post(
       'https://open.bigmodel.cn/api/paas/v4/chat/completions',
       {
-        model: 'glm-4.7',
+        model: 'glm-4.5-air',
         messages: [
           {
             role: 'system',
@@ -138,7 +138,7 @@ async function generateSummary(title, content) {
           }
         ],
         temperature: 0.5,
-        max_tokens: 300
+        max_tokens: 1000
       },
       {
         headers: {
@@ -193,32 +193,21 @@ function generateTags(title, content) {
  * 肖恩风格的质量评分
  */
 function calculateQualityScore(title, content, source) {
-  let score = 0.6; // 基础分（假设 FreshRSS 订阅源已经是精选的）
+  let score = 0.6;
+  const text = (title + ' ' + content).toLowerCase();
   
-  // 标题长度适中
   if (title.length > 10 && title.length < 80) score += 0.05;
-  
-  // 内容长度足够
   if (content.length > 300) score += 0.1;
   if (content.length > 1000) score += 0.1;
   
-  // 排除标题党
   const clickbaitWords = ['震惊', '重磅', '独家', '内幕', '揭秘', 'clickbait'];
-  if (clickbaitWords.some(word => title.toLowerCase().includes(word.toLowerCase()))) {
-    score -= 0.2;
-  }
+  if (clickbaitWords.some(word => title.toLowerCase().includes(word.toLowerCase()))) score -= 0.2;
   
-  // 排除纯广告
   const adWords = ['优惠', '购买', '限时', '免费', '加微信', 'discount', 'buy now'];
-  if (adWords.some(word => content.toLowerCase().includes(word.toLowerCase()))) {
-    score -= 0.2;
-  }
+  if (adWords.some(word => content.toLowerCase().includes(word.toLowerCase()))) score -= 0.2;
   
-  // 技术相关加分
   const techWords = ['code', 'api', 'github', '开发', '技术', 'engineering'];
-  if (techWords.some(word => text.includes(word.toLowerCase()))) {
-    score += 0.1;
-  }
+  if (techWords.some(word => text.includes(word.toLowerCase()))) score += 0.1;
   
   return Math.max(0, Math.min(1, score));
 }
